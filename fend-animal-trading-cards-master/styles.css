@@ -1,0 +1,33 @@
+.html {
+    background: #fff;
+}
+
+.body {
+    margin: auto;
+    width: 50%;
+}
+
+.first {
+	border: 1px solid;
+	width: 400px;
+}
+
+.para-class {
+	font-style: italic;
+}
+
+.second {
+	padding-left: 20px;
+	border: 1px solid;
+	width: 95%;
+}
+
+.image-class {
+	width: 100%;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}

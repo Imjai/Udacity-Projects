@@ -1,10 +1,12 @@
 // Generate random number between 2 numbers
-function randomNumber(max, min) {
+function randomNumber(max, min) 
+{
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 // Check collisions between player and enemy
-function checkCollision(enemy, player) {
+function checkCollision(enemy, player) 
+{
     return (player.x > enemy.x - enemy.hitBox.x / 2 &&
     player.x < enemy.x + enemy.hitBox.x / 2 &&
     player.y > enemy.y - enemy.hitBox.y / 2 &&

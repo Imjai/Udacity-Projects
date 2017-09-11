@@ -1,0 +1,49 @@
+.search {
+    z-index: 1;
+    position: fixed;
+    top: 5px;
+    left: 5px;
+}
+
+.search-field {
+    width: 320px;
+    padding: 5px;
+}
+
+ul {
+    background: white;
+    border: 1px solid black;
+    overflow: auto;
+    padding: 0px;
+    margin-bottom: 0;
+}
+
+.name {
+    list-style: none;
+    padding: 5px;
+    font-weight: bold;
+}
+
+.address {
+    padding: 5px;
+    padding-top: 0px;
+    font-size: 12px;
+    border-bottom: 1px groove;
+}
+
+p {
+    text-align: center;
+    padding: 5px;
+    background-color: white;
+    border: 1px black solid;
+    cursor: pointer;
+}
+
+.box {
+    cursor: pointer;
+}
+
+.box:hover {
+    background-color: #269abc;
+    color: white;
+}

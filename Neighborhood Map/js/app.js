@@ -1,6 +1,3 @@
-/**
- * Created by Manish Bisht on 11/13/2016.
- */
 
 // Setting the maximum height of the searchResults box
 document.getElementById("searchResults").style.maxHeight = (window.innerHeight-345)+"px";

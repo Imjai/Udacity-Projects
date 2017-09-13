@@ -8,14 +8,14 @@ if(width<500)
     document.getElementById("search-field").style.maxWidth = (width-10)+"px";
 
 // Map class used to create maps
-var Map = function () {
+var map = function () {
     var self = this;
     var mapView = document.getElementById('map');
     mapView.style.height = window.innerHeight + "px";
     self.mapOptions = {
         center: {lat: 26.8228575, lng: 75.8434138},
         zoom: 15,
-        mapTypeControl: false,
+        mapTypeControl: false;
     }
     self.map = new google.maps.Map(mapView, self.mapOptions);
     google.maps.event.addDomListener(window, "resize", function () {
@@ -88,9 +88,9 @@ function AppViewModel() {
     self.showMarkers = ko.computed(function () {
         return ko.utils.arrayFilter(self.markers(), function (marker) {
             if (marker.name.toLowerCase().indexOf(self.query().toLowerCase()) >= 0)
-                return marker.show = true;
+                return marker.show == true;
             else
-                return marker.show = false;
+                return marker.show == false;
         });
     }, self);
 
@@ -106,7 +106,7 @@ function AppViewModel() {
     self.showMarkers.subscribe(function () {
         self.showList(true);
         for (var i = 0; i < self.markers().length; i++) {
-            if (self.markers()[i].show == false)
+            if (self.markers()[i].show === false)
                 self.markers()[i].marker.setVisible(false);
             else
                 self.markers()[i].marker.setVisible(true);
@@ -141,10 +141,10 @@ function AppViewModel() {
                 var html = "<strong>"+ marker.name +"</strong><br>";
                 for(var i=0;i<response.location.formattedAddress.length;i++){
                     html+=response.location.formattedAddress[i]+ " ";
-                    if(i%2!=0)
+                    if(i%2!==0)
                         html+="<br>";
                 }
-                if(response.location.formattedAddress.length%2!=0)
+                if(response.location.formattedAddress.length%2!==0)
                     html+="<br>";
                 html+= "Number of CheckIns: "+response.stats.checkinsCount+"<br>";
                 html+= "Number of Users: "+response.stats.usersCount+"<br>";
@@ -157,7 +157,7 @@ function AppViewModel() {
             .fail(function () {
                 self.infoWindow.setContent('Failed to retrive data from FourSquare');
             });
-    }
+    };
 }
 
 // Calls if the google maps is sucessfully loaded

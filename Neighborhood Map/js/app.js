@@ -8,17 +8,20 @@ if(width<500)
     document.getElementById("search-field").style.maxWidth = (width-10)+"px";
 
 // Map class used to create maps
-var map = function () {
+var map = function () 
+{
     var self = this;
     var mapView = document.getElementById('map');
     mapView.style.height = window.innerHeight + "px";
-    self.mapOptions = {
+    self.mapOptions = 
+	{
         center: {lat: 26.8228575, lng: 75.8434138},
         zoom: 15,
-        mapTypeControl: false;
-    }
+        mapTypeControl: false
+    };
     self.map = new google.maps.Map(mapView, self.mapOptions);
-    google.maps.event.addDomListener(window, "resize", function () {
+    google.maps.event.addDomListener(window, "resize", function () 
+	{
         var center = self.map.getCenter();
         google.maps.event.trigger(self.map, "resize");
         self.map.setCenter(center);
@@ -88,9 +91,9 @@ function AppViewModel() {
     self.showMarkers = ko.computed(function () {
         return ko.utils.arrayFilter(self.markers(), function (marker) {
             if (marker.name.toLowerCase().indexOf(self.query().toLowerCase()) >= 0)
-                return marker.show == true;
+                return marker.show === true;
             else
-                return marker.show == false;
+                return marker.show === false;
         });
     }, self);
 

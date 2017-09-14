@@ -32,7 +32,7 @@ function AppViewModel() {
     var self = this;
 
     // Map instance used to display markers on it
-    self.map = new Map();
+    self.map = new map.Map();
 
     // Holds the previous selected marker if any
     var prevMarker;

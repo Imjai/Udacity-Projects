@@ -1,49 +1,62 @@
+body {
+	margin: 0;
+	font-family: Verdana, Geneva, sans-serif;
+}
+
 .search {
-    z-index: 1;
-    position: fixed;
-    top: 5px;
-    left: 5px;
+	width: 100%;
+	display: flex;
 }
 
-.search-field {
-    width: 320px;
-    padding: 5px;
+.search-box {
+	flex-grow: 1;
+	height: 50px;
+	font-size: 1em;
+	padding: 5px 20px;
 }
 
-ul {
-    background: white;
-    border: 1px solid black;
-    overflow: auto;
-    padding: 0px;
-    margin-bottom: 0;
+.app {
+	width: 100%;
+	height: 100%;
+	display: flex;
 }
 
-.name {
+.list {
+	order: 1;
+	flex-grow: 1;
+	background-color: #055;
+}
+
+.map {
+	order: 2;
+	flex-grow: 4;
+	background-color: #fff;
+	text-align: center;
+	height: 1000px;
+}
+
+.results {
+	margin: 0;
+	padding: 0;
+}
+
+.place {
+    margin: 10px;
+    padding: 10px;
     list-style: none;
-    padding: 5px;
-    font-weight: bold;
+    background-color: #088;
 }
 
-.address {
-    padding: 5px;
-    padding-top: 0px;
-    font-size: 12px;
-    border-bottom: 1px groove;
+
+@media only screen and (max-device-width : 959px), only screen and (max-width : 959px)  {
+
+.app {
+	flex-direction: column;
 }
 
-p {
-    text-align: center;
-    padding: 5px;
-    background-color: white;
-    border: 1px black solid;
-    cursor: pointer;
+
+.search-box, .list {
+	font-size: 1.5em;
 }
 
-.box {
-    cursor: pointer;
-}
-
-.box:hover {
-    background-color: #269abc;
-    color: white;
 }

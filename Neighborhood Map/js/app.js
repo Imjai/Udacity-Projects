@@ -1,174 +1,200 @@
+'use strict';
 
-// Setting the maximum height of the searchResults box
-document.getElementById("searchResults").style.maxHeight = (window.innerHeight-345)+"px";
-
-// Setting the minimum width of the searchField
-var width = window.innerWidth;
-if(width<500)
-    document.getElementById("search-field").style.maxWidth = (width-10)+"px";
-
-// Map class used to create maps
-var map = function () 
-{
-    var self = this;
-    var mapView = document.getElementById('map');
-    mapView.style.height = window.innerHeight + "px";
-    self.mapOptions = 
+var initialLocations = [
 	{
-        center: {lat: 26.8228575, lng: 75.8434138},
-        zoom: 15,
-        mapTypeControl: false
-    };
-    self.map = new google.maps.Map(mapView, self.mapOptions);
-    google.maps.event.addDomListener(window, "resize", function () 
+		name: 'HARIVILLA',
+		lat: 26.8212705,
+		long: 75.8709722
+	},
 	{
-        var center = self.map.getCenter();
-        google.maps.event.trigger(self.map, "resize");
-        self.map.setCenter(center);
-    });
+		name: 'Cheelgadi Veg Restaurant',
+		lat: 26.8228516,
+		long: 75.8280929
+	},
+	{
+		name: 'C.M. Bakers',
+		lat: 26.8228575,
+		long: 75.8434138
+	},
+	{
+		name: 'Disco Fly Bar',
+		lat: 26.817704,
+		long: 75.7950774
+	},
+	{
+		name: 'Apex Hospital',
+		lat: 26.8547873,
+		long: 75.8240787
+	},
+	{
+		name: 'Brown Sugar',
+		lat: 26.8593086,
+		long: 75.8082323
+	},
+	{
+		name: 'JTM MALL',
+		lat: 26.8374358,
+		long: 75.8327889
+	},
+	{
+		name: 'Jain Temple',
+		lat: 26.8353075,
+		long: 75.8326276
+	},
+	{
+		name: 'ICICI Bank',
+		lat:  26.8272551,
+		long: 75.8488425
+	}
+
+];
+
+// Declaring global variables now to satisfy strict mode
+var map;
+var clientID;
+var clientSecret;
+
+
+// formatPhone function referenced from
+// http://snipplr.com/view/65672/10-digit-string-to-phone-format/
+
+function formatPhone(phonenum) {
+    var regexObj = /^(?:\+?1[-. ]?)?(?:\(?([0-9]{3})\)?[-. ]?)?([0-9]{3})[-. ]?([0-9]{4})$/;
+    if (regexObj.test(phonenum)) {
+        var parts = phonenum.match(regexObj);
+        var phone = "";
+        if (parts[1]) { phone += "+1 (" + parts[1] + ") "; }
+        phone += parts[2] + "-" + parts[3];
+        return phone;
+    }
+    else {
+        //invalid phone number
+        return phonenum;
+    }
+}
+
+var Location = function(data) {
+	var self = this;
+	this.name = data.name;
+	this.lat = data.lat;
+	this.long = data.long;
+	this.URL = "";
+	this.street = "";
+	this.city = "";
+	this.phone = "";
+
+	this.visible = ko.observable(true);
+
+	var foursquareURL = 'https://api.foursquare.com/v2/venues/search?ll='+ this.lat + ',' + this.long + '&client_id=' + clientID + '&client_secret=' + clientSecret + '&v=20160118' + '&query=' + this.name;
+
+	$.getJSON(foursquareURL).done(function(data) {
+		var results = data.response.venues[0];
+		self.URL = results.url;
+		if (typeof self.URL === 'undefined'){
+			self.URL = "";
+		}
+		self.street = results.location.formattedAddress[0];
+     	self.city = results.location.formattedAddress[1];
+      	self.phone = results.contact.phone;
+      	if (typeof self.phone === 'undefined'){
+			self.phone = "";
+		} else {
+			self.phone = formatPhone(self.phone);
+		}
+	}).fail(function() {
+		alert("There was an error with the Foursquare API call. Please refresh the page and try again to load Foursquare data.");
+	});
+
+	this.contentString = '<div class="info-window-content"><div class="title"><b>' + data.name + "</b></div>" +
+        '<div class="content"><a href="' + self.URL +'">' + self.URL + "</a></div>" +
+        '<div class="content">' + self.street + "</div>" +
+        '<div class="content">' + self.city + "</div>" +
+        '<div class="content">' + self.phone + "</div></div>";
+
+	this.infoWindow = new google.maps.InfoWindow({content: self.contentString});
+
+	this.marker = new google.maps.Marker({
+			position: new google.maps.LatLng(data.lat, data.long),
+			map: map,
+			title: data.name
+	});
+
+	this.showMarker = ko.computed(function() {
+		if(this.visible() === true) {
+			this.marker.setMap(map);
+		} else {
+			this.marker.setMap(null);
+		}
+		return true;
+	}, this);
+
+	this.marker.addListener('click', function(){
+		self.contentString = '<div class="info-window-content"><div class="title"><b>' + data.name + "</b></div>" +
+        '<div class="content"><a href="' + self.URL +'">' + self.URL + "</a></div>" +
+        '<div class="content">' + self.street + "</div>" +
+        '<div class="content">' + self.city + "</div>" +
+        '<div class="content"><a href="tel:' + self.phone +'">' + self.phone +"</a></div></div>";
+
+        self.infoWindow.setContent(self.contentString);
+
+		self.infoWindow.open(map, this);
+
+		self.marker.setAnimation(google.maps.Animation.BOUNCE);
+      	setTimeout(function() {
+      		self.marker.setAnimation(null);
+     	}, 2100);
+	});
+
+	this.bounce = function(place) {
+		google.maps.event.trigger(self.marker, 'click');
+	};
 };
 
 function AppViewModel() {
-    var self = this;
+	var self = this;
 
-    // Map instance used to display markers on it
-    self.map = new map.Map();
+	this.searchTerm = ko.observable("");
 
-    // Holds the previous selected marker if any
-    var prevMarker;
+	this.locationList = ko.observableArray([]);
 
-    /**
-     * Class for creating map markers containts all the information about that point
-     * @param {string} title [location name or title]
-     * @param {string} subtitle [location category or subtitle]
-     * @param {number} latitude
-     * @param {number} longitude
-     * @param {string} streetAddress
-     * @param {string} cityAddress
-     * @param {string} url
-     * @param {string} mobileNumber
-     */
-    self.marker = function (title, subtitle, latitude, longitude, streetAddress) {
-        this.title = title;
-        this.subtitle = subtitle;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.streetAddress = streetAddress;
-        this.name = this.title+" - "+this.subtitle;
-        this.marker = new google.maps.Marker({
-            position: new google.maps.LatLng(this.latitude, this.longitude),
-            animation: google.maps.Animation.DROP,
-            map: self.map.map
-        });
-        google.maps.event.addListener(this.marker, 'click', function() {
-            self.showInfoWindow(this);
-        }.bind(this));
-        google.maps.event.addListener(self.map.map, 'click', function() {
-            self.infoWindow.close();
-            if (prevMarker)
-                prevMarker.setAnimation(null);
-        });
-    };
+	map = new google.maps.Map(document.getElementById('map'), {
+			zoom: 15,
+			center: {lat: 26.8228575, lng: 75.8434138}
+	});
 
-    // Content of all the locations
-    self.markers = ko.observableArray([
-        new self.marker("HARIVILLA", "Hotel & Restaurant", 26.8228995, 75.8280929, "Shivam Nagar, Keshar Vihar"),
-        new self.marker("Cheelgadi Veg Restaurant", "Restaurant", 26.8228995, 75.8280929, "Airport Road, Jagatpura"),
-        new self.marker("C.M. Bakers", "Bakery", 26.8228575, 75.8434138, "Vidhyadhar Nagar, Keshar Vihar"),
-        new self.marker("Disco Fly Bar", "Pubs & Bar", 26.8229345, 75.8105829, "417-B, Sanganer Flyover, Shiv Nagar"),
-        new self.marker("Apex Hospital", "Hospital", 26.8521994, 75.8262477, "SP-4 & 6, Malviya Nagar Industrial Area"),
-        new self.marker("Brown Sugar", "Cafe` & Bakery", 26.8592906, 75.8065908, "G-1, Svc Vinay Building, Opp. Bharat Petroleum"),
-        new self.marker("JTM MALL", "Shopping Center", 26.8372743, 75.8365779, "Near Textile Market, Model Town, Jagatpura"),
-        new self.marker("Jain Temple", "Temple", 26.83502, 75.8334671, "A-3, Jagatpura Rd, Mayapuri"),
-        new self.marker("Triveni Vivah Palace", "Banquet Hall", 26.827819, 75.8452001, "Brij Vatika, 200 Feet Road, Vidhyadhar Nagar"),
-        new self.marker("ICICI Bank", "Bank", 26.8272551, 75.8488425, "Plot No-172, Rohini Nagar"),
-    ]);
+	// Foursquare API settings
+	clientID = "V443OTCAQPJLCRY4QWBFYN3ZK5FDKGJOYDHLMI3O342IRVNN";
+	clientSecret = "AK1JHLEG2D2KW14WF5HYVFNTUYFTBXYS4LDUUNRAHPR5URLB";
 
-    // Keep track on search query
-    self.query = ko.observable("");
+	initialLocations.forEach(function(locationItem){
+		self.locationList.push( new Location(locationItem));
+	});
 
-    // Filtering markers array
-    self.showMarkers = ko.computed(function () {
-        return ko.utils.arrayFilter(self.markers(), function (marker) {
-            if (marker.name.toLowerCase().indexOf(self.query().toLowerCase()) >= 0)
-                return marker.show === true;
-            else
-                return marker.show === false;
-        });
-    }, self);
+	this.filteredList = ko.computed( function() {
+		var filter = self.searchTerm().toLowerCase();
+		if (!filter) {
+			self.locationList().forEach(function(locationItem){
+				locationItem.visible(true);
+			});
+			return self.locationList();
+		} else {
+			return ko.utils.arrayFilter(self.locationList(), function(locationItem) {
+				var string = locationItem.name.toLowerCase();
+				var result = (string.search(filter) >= 0);
+				locationItem.visible(result);
+				return result;
+			});
+		}
+	}, self);
 
-    // Shows the suggestions list
-    self.showList=ko.observable(true);
-
-    // Hides the suggestions list
-    self.hideList = function () {
-        this.showList(false);
-    };
-
-    // Hide/show markers based on search query
-    self.showMarkers.subscribe(function () {
-        self.showList(true);
-        for (var i = 0; i < self.markers().length; i++) {
-            if (self.markers()[i].show === false)
-                self.markers()[i].marker.setVisible(false);
-            else
-                self.markers()[i].marker.setVisible(true);
-        }
-    });
-
-    // creates a infoWindow to display marker details
-    self.infoWindow = new google.maps.InfoWindow({});
-
-    // displaying infowindow with marker details
-    self.showInfoWindow = function (marker) {
-        if (prevMarker)
-            prevMarker.setAnimation(null);
-        prevMarker = marker.marker;
-        marker.marker.setAnimation(google.maps.Animation.BOUNCE);
-        self.infoWindow.setContent('Loading Data...');
-        self.map.map.setCenter(marker.marker.getPosition());
-        self.map.map.panBy(0,-200);
-        self.infoWindow.open(self.map.map, marker.marker);
-        self.getInfo(marker);
-        self.showList(false);
-    };
-
-    // Get location data from FourSquare
-    self.getInfo = function (marker) {
-        var clientId = "TPIDDHBKB2QFBWEV2MPDOFGUSWXCXGAA5IVOWEMN5ASR3UJW";
-        var clientSecret= "4HB1ZZJBVXC3F0BREBPSGXYK0VZ5ALS4XRNJZSBP1JROG0DE";
-        var url = "https://api.foursquare.com/v2/venues/search?client_id="+clientId+"&client_secret="+clientSecret+"&v=20130815&ll="+marker.latitude+","+marker.longitude+"&query="+marker.title+"&limit=1";
-        $.getJSON(url)
-            .done(function (response) {
-                response =  response.response.venues[0];
-                var html = "<strong>"+ marker.name +"</strong><br>";
-                for(var i=0;i<response.location.formattedAddress.length;i++){
-                    html+=response.location.formattedAddress[i]+ " ";
-                    if(i%2!==0)
-                        html+="<br>";
-                }
-                if(response.location.formattedAddress.length%2!==0)
-                    html+="<br>";
-                html+= "Number of CheckIns: "+response.stats.checkinsCount+"<br>";
-                html+= "Number of Users: "+response.stats.usersCount+"<br>";
-                html+= "Verified Place: "+(response.verified ? 'Yes' : 'No')+"<br>";
-                if(response.contact.phone)
-                    html+="Contact: "+response.contact.phone;
-                self.infoWindow.setContent(html);
-                //console.log(response);
-            })
-            .fail(function () {
-                self.infoWindow.setContent('Failed to retrive data from FourSquare');
-            });
-    };
+	this.mapElem = document.getElementById('map');
+	this.mapElem.style.height = window.innerHeight - 50;
 }
 
-// Calls if the google maps is sucessfully loaded
-function googleMapSuccess() {
-    ko.applyBindings(new AppViewModel());
+function startApp() {
+	ko.applyBindings(new AppViewModel());
 }
 
-// Calls if google maps can't be loaded
-function googleMapError() {
-    document.body.innerHTML = "<center><h5>Please Try again !!<br> Unable to load Google Maps</h5></center>";
+function errorHandling() {
+	alert("Google Maps has failed to load. Please check your internet connection and try again.");
 }
